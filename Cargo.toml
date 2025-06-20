@@ -1,0 +1,50 @@
+[workspace]
+members = [
+    "fast-grep",
+    "fast-find", 
+    "fast-ls",
+    "fast-du"
+]
+resolver = "2"
+
+[workspace.dependencies]
+# CLI and argument parsing
+clap = { version = "4.5", features = ["derive", "color"] }
+
+# Parallelism and concurrency
+rayon = "1.10"
+tokio = { version = "1.40", features = ["full"] }
+crossbeam = "0.8"
+
+# Pattern matching and text processing
+regex = "1.10"
+aho-corasick = "1.1"
+memchr = "2.7"
+
+# File system operations
+walkdir = "2.5"
+ignore = "0.4"
+memmap2 = "0.9"
+
+# Performance and utilities
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Output formatting and colors
+colored = "2.1"
+indicatif = "0.17"
+tabled = "0.15"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = 3
+
+[profile.release-with-debug]
+inherits = "release"
+debug = 1
+strip = false

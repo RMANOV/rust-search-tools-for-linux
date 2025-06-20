@@ -1,0 +1,25 @@
+[package]
+name = "fast-grep"
+version = "0.1.0"
+edition = "2021"
+authors = ["Search Tools Team"]
+description = "Ultra-fast parallel text search tool - modern grep alternative"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "fgrep"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+rayon = { workspace = true }
+regex = { workspace = true }
+aho-corasick = { workspace = true }
+memchr = { workspace = true }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+memmap2 = { workspace = true }
+anyhow = { workspace = true }
+colored = { workspace = true }
+crossbeam = { workspace = true }
+num_cpus = "1.16"
