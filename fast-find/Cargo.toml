@@ -1,0 +1,22 @@
+[package]
+name = "fast-find"
+version = "0.1.0"
+edition = "2021"
+authors = ["Search Tools Team"]
+description = "Ultra-fast parallel file finder - modern find alternative"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "ffind"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+rayon = { workspace = true }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+anyhow = { workspace = true }
+colored = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+num_cpus = "1.16"
