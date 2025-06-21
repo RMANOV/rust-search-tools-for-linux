@@ -171,7 +171,7 @@ fgrep "function" src/ -c
 fgrep -i "database" . -r --threads=16
 ```
 
-### **🗃️ `ffind` - Directory Traversal at Light Speed** *(Coming Soon)*
+### **🗃️ `ffind` - Directory Traversal at Light Speed**
 
 ```bash
 # 🔎 Find by name pattern
