@@ -3,7 +3,7 @@ use content_inspector::{inspect, ContentType};
 use memmap2::Mmap;
 use std::fs::File;
 use std::io::{BufRead, Read};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[derive(Clone)]
 pub struct FileProcessor {

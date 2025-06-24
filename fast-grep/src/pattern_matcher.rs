@@ -1,6 +1,6 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use anyhow::Result;
-use memchr::{memchr, memchr_iter};
+use memchr::memchr_iter;
 use regex::bytes::{Regex, RegexBuilder};
 
 pub struct PatternMatcher {
