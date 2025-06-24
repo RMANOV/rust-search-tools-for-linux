@@ -1,8 +1,9 @@
-use anyhow::Result;
+use crate::errors::{FastGrepError, Result};
+use content_inspector::{inspect, ContentType};
 use memmap2::Mmap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
-use std::path::Path;
+use std::io::{BufRead, Read};
+use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
 pub struct FileProcessor {
@@ -20,12 +21,16 @@ impl FileProcessor {
 
     pub fn process_file<P: AsRef<Path>>(&self, path: P) -> Result<FileContent> {
         let path = path.as_ref();
-        let metadata = std::fs::metadata(path)?;
+        let path_buf = path.to_path_buf();
+        let metadata = std::fs::metadata(path)
+            .map_err(|e| FastGrepError::file_processing(path_buf.clone(), e))?;
         let file_size = metadata.len();
 
-        // Skip binary files by checking for null bytes in first 1KB
-        if self.is_likely_binary(path)? {
-            return Ok(FileContent::Binary);
+        // Skip binary files with better detection
+        if self.is_likely_binary(path).map_err(|e| 
+            FastGrepError::content_inspection(path_buf.clone(), e)
+        )? {
+            return Err(FastGrepError::BinaryFile { path: path_buf });
         }
 
         // Use memory mapping for large files if enabled
@@ -37,28 +42,46 @@ impl FileProcessor {
     }
 
     fn process_with_mmap<P: AsRef<Path>>(&self, path: P) -> Result<FileContent> {
-        let file = File::open(path)?;
-        let mmap = unsafe { Mmap::map(&file)? };
+        let path = path.as_ref();
+        let path_buf = path.to_path_buf();
+        
+        let file = File::open(path)
+            .map_err(|e| FastGrepError::file_processing(path_buf.clone(), e))?;
+        
+        let mmap = unsafe { 
+            Mmap::map(&file)
+                .map_err(|e| FastGrepError::memory_mapping(path_buf, e))?
+        };
+        
         Ok(FileContent::Mapped(mmap))
     }
 
     fn process_with_read<P: AsRef<Path>>(&self, path: P) -> Result<FileContent> {
-        let mut file = File::open(path)?;
+        let path = path.as_ref();
+        let path_buf = path.to_path_buf();
+        
+        let mut file = File::open(path)
+            .map_err(|e| FastGrepError::file_processing(path_buf.clone(), e))?;
+        
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
+        file.read_to_end(&mut buffer)
+            .map_err(|e| FastGrepError::file_processing(path_buf, e))?;
+        
         Ok(FileContent::InMemory(buffer))
     }
 
-    fn is_likely_binary<P: AsRef<Path>>(&self, path: P) -> Result<bool> {
+    fn is_likely_binary<P: AsRef<Path>>(&self, path: P) -> std::io::Result<bool> {
         let mut file = File::open(path)?;
-        let mut buffer = [0; 1024]; // Check first 1KB
+        let mut buffer = vec![0; 8192]; // Check first 8KB for better accuracy
         let bytes_read = file.read(&mut buffer)?;
-
-        // Check for null bytes (common in binary files)
-        let null_count = buffer[..bytes_read].iter().filter(|&&b| b == 0).count();
         
-        // If more than 1% are null bytes, likely binary
-        Ok(null_count > bytes_read / 100)
+        if bytes_read == 0 {
+            return Ok(false); // Empty files are considered text
+        }
+        
+        // Use content_inspector for more accurate binary detection
+        let content_type = inspect(&buffer[..bytes_read]);
+        Ok(matches!(content_type, ContentType::BINARY))
     }
 }
 
@@ -119,7 +142,7 @@ pub struct Line<'a> {
 }
 
 impl<'a> Line<'a> {
-    pub fn as_str(&self) -> Result<&str, std::str::Utf8Error> {
+    pub fn as_str(&self) -> std::result::Result<&str, std::str::Utf8Error> {
         std::str::from_utf8(self.content)
     }
 

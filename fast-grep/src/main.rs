@@ -8,6 +8,7 @@ mod file_processor;
 mod pattern_matcher;
 mod output;
 mod worker;
+mod errors;
 
 use cli::Args;
 use search::SearchEngine;

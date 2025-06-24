@@ -20,6 +20,11 @@ walkdir = { workspace = true }
 ignore = { workspace = true }
 memmap2 = { workspace = true }
 anyhow = { workspace = true }
+thiserror = { workspace = true }
 colored = { workspace = true }
 crossbeam = { workspace = true }
+content_inspector = { workspace = true }
 num_cpus = "1.16"
+
+[dev-dependencies]
+tempfile = "3.0"
