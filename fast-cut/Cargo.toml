@@ -1,0 +1,28 @@
+[package]
+name = "fast-cut"
+version = "0.1.0"
+edition = "2021"
+authors = ["Search Tools Team"]
+description = "Ultra-fast field extraction tool for delimited data and logs"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "fcut"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+rayon = { workspace = true }
+memchr = { workspace = true }
+regex = { workspace = true }
+colored = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+csv = { workspace = true }
+atty = "0.2"
+num_cpus = "1.16"
+
+[dev-dependencies]
+tempfile = "3.0"
