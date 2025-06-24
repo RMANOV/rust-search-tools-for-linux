@@ -1,0 +1,33 @@
+[package]
+name = "fast-tail"
+version = "0.1.0"
+edition = "2021"
+authors = ["Search Tools Team"]
+description = "Ultra-fast real-time file monitoring and log tailing tool"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "ftail"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+futures = { workspace = true }
+notify = { workspace = true }
+regex = { workspace = true }
+colored = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+crossbeam = { workspace = true }
+memchr = { workspace = true }
+atty = "0.2"
+chrono = { workspace = true }
+bytes = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.0"
+tokio-test = "0.4"
