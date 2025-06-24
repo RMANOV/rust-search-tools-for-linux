@@ -3,7 +3,8 @@ members = [
     "fast-grep",
     "fast-find", 
     "fast-ls",
-    "fast-du"
+    "fast-du",
+    "fast-tail"
 ]
 resolver = "2"
 
@@ -37,6 +38,13 @@ serde_json = "1.0"
 colored = "2.1"
 indicatif = "0.17"
 tabled = "0.15"
+
+# File monitoring and async utilities
+notify = "6.0"
+chrono = { version = "0.4", features = ["serde"] }
+bytes = "1.5"
+tokio-util = "0.7"
+futures = "0.3"
 
 [profile.release]
 lto = true
