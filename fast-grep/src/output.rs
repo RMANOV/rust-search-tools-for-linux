@@ -8,6 +8,11 @@ pub struct OutputFormatter {
     json_output: bool,
     before_context: usize,
     after_context: usize,
+    only_matching: bool,
+    invert_match: bool,
+    count_only: bool,
+    files_only: bool,
+    files_without_matches: bool,
 }
 
 impl OutputFormatter {
@@ -18,6 +23,11 @@ impl OutputFormatter {
         json_output: bool,
         before_context: usize,
         after_context: usize,
+        only_matching: bool,
+        invert_match: bool,
+        count_only: bool,
+        files_only: bool,
+        files_without_matches: bool,
     ) -> Self {
         Self {
             show_line_numbers,
@@ -26,6 +36,11 @@ impl OutputFormatter {
             json_output,
             before_context,
             after_context,
+            only_matching,
+            invert_match,
+            count_only,
+            files_only,
+            files_without_matches,
         }
     }
 
@@ -76,11 +91,23 @@ impl OutputFormatter {
             output.push(':');
         }
 
-        // Line content with highlighted matches
-        if self.use_colors {
-            output.push_str(&self.highlight_match(line_content, match_start, match_end));
+        // Content - show only matching part if only_matching is enabled
+        if self.only_matching {
+            if match_start < match_end && match_end <= line_content.len() {
+                let match_text = &line_content[match_start..match_end];
+                if self.use_colors {
+                    output.push_str(&match_text.red().bold().to_string());
+                } else {
+                    output.push_str(match_text);
+                }
+            }
         } else {
-            output.push_str(line_content);
+            // Line content with highlighted matches
+            if self.use_colors {
+                output.push_str(&self.highlight_match(line_content, match_start, match_end));
+            } else {
+                output.push_str(line_content);
+            }
         }
 
         output
@@ -270,7 +297,19 @@ mod tests {
 
     #[test]
     fn test_text_formatting() {
-        let formatter = OutputFormatter::new(true, true, false, false, 0, 0);
+        let formatter = OutputFormatter::new(
+            true,  // show_line_numbers
+            true,  // show_filenames
+            false, // use_colors
+            false, // json_output
+            0,     // before_context
+            0,     // after_context
+            false, // only_matching
+            false, // invert_match
+            false, // count_only
+            false, // files_only
+            false, // files_without_matches
+        );
         let result = formatter.format_match(
             &PathBuf::from("test.txt"),
             42,
@@ -283,7 +322,19 @@ mod tests {
 
     #[test]
     fn test_json_formatting() {
-        let formatter = OutputFormatter::new(true, true, false, true, 0, 0);
+        let formatter = OutputFormatter::new(
+            true,  // show_line_numbers
+            true,  // show_filenames
+            false, // use_colors
+            true,  // json_output
+            0,     // before_context
+            0,     // after_context
+            false, // only_matching
+            false, // invert_match
+            false, // count_only
+            false, // files_only
+            false, // files_without_matches
+        );
         let result = formatter.format_match(
             &PathBuf::from("test.txt"),
             42,
@@ -293,5 +344,30 @@ mod tests {
         );
         assert!(result.contains(r#""file":"test.txt""#));
         assert!(result.contains(r#""line":42"#));
+    }
+
+    #[test]
+    fn test_only_matching() {
+        let formatter = OutputFormatter::new(
+            true,  // show_line_numbers
+            true,  // show_filenames
+            false, // use_colors
+            false, // json_output
+            0,     // before_context
+            0,     // after_context
+            true,  // only_matching
+            false, // invert_match
+            false, // count_only
+            false, // files_only
+            false, // files_without_matches
+        );
+        let result = formatter.format_match(
+            &PathBuf::from("test.txt"),
+            42,
+            "hello world rust code",
+            6,     // start of "world"
+            11     // end of "world"
+        );
+        assert_eq!(result, "test.txt:42:world");
     }
 }

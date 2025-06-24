@@ -24,6 +24,7 @@ thiserror = { workspace = true }
 colored = { workspace = true }
 crossbeam = { workspace = true }
 content_inspector = { workspace = true }
+atty = "0.2"
 num_cpus = "1.16"
 
 [dev-dependencies]

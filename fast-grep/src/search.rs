@@ -21,9 +21,10 @@ pub struct SearchEngine {
 impl SearchEngine {
     pub fn new(args: Args) -> Result<Self> {
         // Initialize pattern matcher
+        let use_regex = args.use_regex && !args.fixed_strings;
         let pattern_matcher = PatternMatcher::new(
             &args.pattern,
-            args.use_regex,
+            use_regex,
             args.ignore_case,
         )?;
 
@@ -34,13 +35,19 @@ impl SearchEngine {
         );
 
         // Initialize output formatter
+        let show_filenames = !args.no_filename && args.paths.len() > 1;
         let output_formatter = OutputFormatter::new(
             args.line_numbers,
-            true, // Always show filenames for multi-file search
-            !args.no_color,
+            show_filenames,
+            args.should_use_colors(),
             args.json_output,
             args.get_before_context(),
             args.get_after_context(),
+            args.only_matching,
+            args.invert_match,
+            args.count_only,
+            args.files_only,
+            args.files_without_matches,
         );
 
         // Initialize worker pool
@@ -48,6 +55,7 @@ impl SearchEngine {
             file_processor.clone(),
             pattern_matcher.clone(),
             args.get_threads(),
+            args.invert_match,
         );
 
         Ok(Self {
@@ -73,7 +81,9 @@ impl SearchEngine {
         let mut stats = SearchStats::new();
         
         // Different execution modes based on output requirements
-        if self.args.files_only {
+        if self.args.files_without_matches {
+            self.run_files_without_matches_mode(&files_to_search, &mut stats)?;
+        } else if self.args.files_only {
             self.run_files_only_mode(&files_to_search, &mut stats)?;
         } else if self.args.count_only {
             self.run_count_mode(&files_to_search, &mut stats)?;
@@ -156,6 +166,26 @@ impl SearchEngine {
         
         for file_path in files {
             let had_matches = files_with_matches.contains(file_path);
+            stats.add_file(had_matches, self.get_file_size(file_path), if had_matches { 1 } else { 0 });
+        }
+        Ok(())
+    }
+
+    fn run_files_without_matches_mode(&self, files: &[PathBuf], stats: &mut SearchStats) -> Result<()> {
+        let results = self.worker_pool.search_files(files.to_vec())?;
+        let mut files_with_matches = std::collections::HashSet::new();
+        
+        // Collect all files that have matches
+        for match_result in results {
+            files_with_matches.insert(match_result.file_path.clone());
+        }
+        
+        // Print files that have NO matches
+        for file_path in files {
+            let had_matches = files_with_matches.contains(file_path);
+            if !had_matches {
+                println!("{}", self.output_formatter.format_filename_only(file_path));
+            }
             stats.add_file(had_matches, self.get_file_size(file_path), if had_matches { 1 } else { 0 });
         }
         Ok(())
@@ -269,10 +299,15 @@ mod tests {
             pattern: "hello".to_string(),
             paths: vec![temp_dir.path().to_path_buf()],
             use_regex: false,
+            fixed_strings: false,
             ignore_case: false,
             line_numbers: true,
             files_only: false,
             count_only: false,
+            invert_match: false,
+            only_matching: false,
+            files_without_matches: false,
+            no_filename: false,
             recursive: true,
             before_context: None,
             after_context: None,
@@ -282,6 +317,7 @@ mod tests {
             exclude_types: None,
             respect_ignore: true,
             search_hidden: false,
+            color: crate::cli::ColorOption::Auto,
             no_color: false,
             json_output: false,
             max_filesize_mb: 100,

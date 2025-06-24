@@ -14,6 +14,7 @@ pub struct WorkerPool {
     file_processor: Arc<FileProcessor>,
     pattern_matcher: Arc<PatternMatcher>,
     num_threads: usize,
+    invert_match: bool,
 }
 
 impl WorkerPool {
@@ -21,11 +22,13 @@ impl WorkerPool {
         file_processor: FileProcessor,
         pattern_matcher: PatternMatcher,
         num_threads: usize,
+        invert_match: bool,
     ) -> Self {
         Self {
             file_processor: Arc::new(file_processor),
             pattern_matcher: Arc::new(pattern_matcher),
             num_threads,
+            invert_match,
         }
     }
 
@@ -52,14 +55,20 @@ impl WorkerPool {
             FileContent::Binary => Ok(Vec::new()),
             _ => {
                 let bytes = file_content.as_bytes().unwrap();
-                let matches = self.pattern_matcher.find_matches(bytes);
                 
-                if matches.is_empty() {
-                    return Ok(Vec::new());
-                }
+                if self.invert_match {
+                    // For inverted matches, find lines that DON'T contain the pattern
+                    self.find_non_matching_lines(file_path.clone(), &file_content)
+                } else {
+                    let matches = self.pattern_matcher.find_matches(bytes);
+                    
+                    if matches.is_empty() {
+                        return Ok(Vec::new());
+                    }
 
-                // Convert byte matches to line-based matches
-                self.convert_to_line_matches(file_path.clone(), &file_content, matches)
+                    // Convert byte matches to line-based matches
+                    self.convert_to_line_matches(file_path.clone(), &file_content, matches)
+                }
             }
         }
     }
@@ -90,6 +99,34 @@ impl WorkerPool {
                     match_end_in_line,
                 );
                 
+                results.push(match_result);
+            }
+        }
+
+        Ok(results)
+    }
+
+    fn find_non_matching_lines(&self, file_path: PathBuf, file_content: &FileContent) -> Result<Vec<MatchResult>> {
+        let lines = file_content.lines().unwrap();
+        let bytes = file_content.as_bytes().unwrap();
+        let mut results = Vec::new();
+
+        for line in lines {
+            let line_start = line.start;
+            let line_end = line.end;
+            let line_bytes = &bytes[line_start..line_end];
+            let matches = self.pattern_matcher.find_matches(line_bytes);
+            
+            // If no matches found in this line, it's a non-matching line
+            if matches.is_empty() {
+                let line_content = line.as_str()?.to_string();
+                let match_result = MatchResult::new(
+                    file_path.clone(),
+                    line.number,
+                    line_content,
+                    0, // No specific match position for inverted matches
+                    0,
+                );
                 results.push(match_result);
             }
         }
@@ -193,9 +230,10 @@ mod tests {
     fn test_worker_pool_creation() {
         let file_processor = FileProcessor::new(1024 * 1024, true);
         let pattern_matcher = PatternMatcher::new("test", false, false).unwrap();
-        let worker_pool = WorkerPool::new(file_processor, pattern_matcher, 4);
+        let worker_pool = WorkerPool::new(file_processor, pattern_matcher, 4, false);
         
         assert_eq!(worker_pool.num_threads, 4);
+        assert_eq!(worker_pool.invert_match, false);
     }
 
     #[test]
