@@ -1,12 +1,12 @@
 use anyhow::Result;
-use ignore::{Walk, WalkBuilder};
-use std::collections::{HashMap, HashSet};
+use ignore::WalkBuilder;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
 
 use crate::cli::Args;
 use crate::file_processor::FileProcessor;
-use crate::output::{MatchResult, OutputFormatter};
+use crate::output::OutputFormatter;
 use crate::pattern_matcher::PatternMatcher;
 use crate::worker::{SearchStats, WorkerPool};
 

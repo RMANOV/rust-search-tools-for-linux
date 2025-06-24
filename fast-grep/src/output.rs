@@ -1,4 +1,3 @@
-use anyhow::Result;
 use colored::*;
 use std::path::Path;
 

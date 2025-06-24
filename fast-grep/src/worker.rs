@@ -103,15 +103,15 @@ impl WorkerPool {
     {
         let (tx, rx): (Sender<MatchResult>, Receiver<MatchResult>) = channel::unbounded();
         let processed_files = Arc::new(AtomicUsize::new(0));
-        let total_files = file_paths.len();
+        let _total_files = file_paths.len();
 
         // Spawn worker threads
-        let handles: Vec<_> = (0..self.num_threads)
+        let _handles: Vec<_> = (0..self.num_threads)
             .map(|_| {
-                let tx = tx.clone();
-                let file_processor = Arc::clone(&self.file_processor);
-                let pattern_matcher = Arc::clone(&self.pattern_matcher);
-                let processed_files = Arc::clone(&processed_files);
+                let _tx = tx.clone();
+                let _file_processor = Arc::clone(&self.file_processor);
+                let _pattern_matcher = Arc::clone(&self.pattern_matcher);
+                let _processed_files = Arc::clone(&processed_files);
                 
                 thread::spawn(move || -> Result<()> {
                     // Each worker processes files in parallel using rayon
