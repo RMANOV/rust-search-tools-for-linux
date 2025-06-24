@@ -1,5 +1,15 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum ColorOption {
+    /// Auto-detect color support
+    Auto,
+    /// Always use colors
+    Always,
+    /// Never use colors
+    Never,
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "fgrep")]
@@ -18,6 +28,10 @@ pub struct Args {
     #[arg(short = 'E', long = "regex")]
     pub use_regex: bool,
 
+    /// Fixed string search (literal matching, no regex)
+    #[arg(short = 'F', long = "fixed-strings")]
+    pub fixed_strings: bool,
+
     /// Case insensitive search
     #[arg(short = 'i', long = "ignore-case")]
     pub ignore_case: bool,
@@ -33,6 +47,22 @@ pub struct Args {
     /// Show count of matching lines per file
     #[arg(short = 'c', long = "count")]
     pub count_only: bool,
+
+    /// Invert match (show non-matching lines)
+    #[arg(short = 'v', long = "invert-match")]
+    pub invert_match: bool,
+
+    /// Show only the matching part of lines
+    #[arg(short = 'o', long = "only-matching")]
+    pub only_matching: bool,
+
+    /// Show only names of files without matches
+    #[arg(short = 'L', long = "files-without-match")]
+    pub files_without_matches: bool,
+
+    /// Suppress filename prefix in output
+    #[arg(short = 'h', long = "no-filename")]
+    pub no_filename: bool,
 
     /// Recursively search directories
     #[arg(short = 'r', long = "recursive", default_value_t = true)]
@@ -70,7 +100,11 @@ pub struct Args {
     #[arg(long = "hidden")]
     pub search_hidden: bool,
 
-    /// Disable colored output
+    /// Control colored output
+    #[arg(long = "color", value_enum, default_value = "auto")]
+    pub color: ColorOption,
+
+    /// Disable colored output (deprecated, use --color=never)
     #[arg(long = "no-color")]
     pub no_color: bool,
 
@@ -102,5 +136,25 @@ impl Args {
 
     pub fn max_filesize_bytes(&self) -> u64 {
         self.max_filesize_mb * 1024 * 1024
+    }
+
+    pub fn should_use_colors(&self) -> bool {
+        if self.no_color {
+            return false;
+        }
+        match self.color {
+            ColorOption::Always => true,
+            ColorOption::Never => false,
+            ColorOption::Auto => atty::is(atty::Stream::Stdout),
+        }
+    }
+
+    pub fn is_literal_search(&self) -> bool {
+        self.fixed_strings || (!self.use_regex && !self.pattern_looks_like_regex())
+    }
+
+    fn pattern_looks_like_regex(&self) -> bool {
+        // Simple heuristic to detect if pattern contains regex metacharacters
+        self.pattern.chars().any(|c| matches!(c, '.' | '*' | '+' | '?' | '^' | '$' | '|' | '[' | ']' | '(' | ')' | '{' | '}'))
     }
 }
