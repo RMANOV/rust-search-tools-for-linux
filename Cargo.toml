@@ -5,7 +5,8 @@ members = [
     "fast-ls",
     "fast-du",
     "fast-tail",
-    "fast-cut"
+    "fast-cut",
+    "fast-awk"
 ]
 resolver = "2"
 
