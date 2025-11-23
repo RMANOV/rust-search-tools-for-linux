@@ -107,7 +107,7 @@ fn run() -> Result<()> {
                 
                 interpreter.context.set_filename(file_path.display().to_string());
                 
-                let file = File::open(file_path).map_err(|e| {
+                let file = File::open(file_path).map_err(|_e| {
                     FastAwkError::file_not_found(file_path.clone())
                 })?;
                 

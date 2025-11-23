@@ -60,3 +60,9 @@ opt-level = 3
 inherits = "release"
 debug = 1
 strip = false
+
+# Reduce warning noise for incomplete features
+[workspace.lints.rust]
+dead_code = "allow"          # Allow dead code for future features
+unused_imports = "warn"      # Still warn about unused imports
+unused_variables = "warn"    # Still warn about unused variables

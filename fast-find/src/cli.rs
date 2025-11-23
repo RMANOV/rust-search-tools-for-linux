@@ -258,7 +258,7 @@ fn is_valid_size_spec(s: &str) -> bool {
         return false;
     }
     
-    let (prefix, rest) = if s.starts_with(['+', '-', '=']) {
+    let (_prefix, rest) = if s.starts_with(['+', '-', '=']) {
         (&s[0..1], &s[1..])
     } else {
         ("", s)

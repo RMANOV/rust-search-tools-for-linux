@@ -1,7 +1,6 @@
 use anyhow::Result;
 use rayon::prelude::*;
 use std::fs;
-use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -42,7 +41,7 @@ impl WorkerPool {
     }
 
     pub fn process_files(&self, walk_results: Vec<WalkResult>) -> Result<Vec<ProcessingResult>> {
-        let start_time = Instant::now();
+        let _start_time = Instant::now();
         
         // Configure rayon thread pool
         let pool = rayon::ThreadPoolBuilder::new()

@@ -10,6 +10,9 @@ license = "MIT OR Apache-2.0"
 name = "fcut"
 path = "src/main.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
 clap = { workspace = true }
 rayon = { workspace = true }

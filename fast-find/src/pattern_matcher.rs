@@ -2,8 +2,8 @@ use anyhow::{anyhow, Result};
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::path::Path;
+use std::time::{Duration, SystemTime};
 
 use crate::cli::Args;
 

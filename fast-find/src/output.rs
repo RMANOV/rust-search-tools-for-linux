@@ -2,10 +2,8 @@ use anyhow::Result;
 use colored::{ColoredString, Colorize};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::SystemTime;
-
-use crate::file_walker::WalkStats;
 
 #[derive(Debug, Clone)]
 pub struct OutputFormatter {
@@ -49,7 +47,7 @@ impl OutputFormatter {
         }
     }
 
-    pub fn format_path(&self, path: &Path, metadata: Option<&fs::Metadata>, depth: usize) -> Result<String> {
+    pub fn format_path(&self, path: &Path, metadata: Option<&fs::Metadata>, _depth: usize) -> Result<String> {
         if self.json_output {
             return Ok(String::new()); // JSON output handled separately
         }
