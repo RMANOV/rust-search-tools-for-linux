@@ -198,11 +198,11 @@ fn format_permissions(metadata: &fs::Metadata) -> String {
 fn format_time_iso(time: std::time::SystemTime) -> Result<String> {
     let duration = time.duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| anyhow::anyhow!("Time conversion error: {}", e))?;
-    
+
     let secs = duration.as_secs();
-    let dt = chrono::NaiveDateTime::from_timestamp(secs as i64, 0)
+    let dt = chrono::DateTime::from_timestamp(secs as i64, 0)
         .ok_or_else(|| anyhow::anyhow!("Invalid timestamp"))?;
-    
+
     Ok(dt.format("%Y-%m-%dT%H:%M:%SZ").to_string())
 }
 

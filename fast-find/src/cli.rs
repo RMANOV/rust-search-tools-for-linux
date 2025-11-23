@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(name = "ffind")]
 #[command(about = "Ultra-fast parallel file finder - modern find alternative")]
 #[command(version = "0.1.0")]

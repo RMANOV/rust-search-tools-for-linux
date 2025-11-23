@@ -87,8 +87,7 @@ impl FileWalker {
             .git_ignore(self.args.respect_ignore)
             .follow_links(self.args.follow_symlinks)
             .same_file_system(!self.args.cross_filesystem)
-            .threads(self.args.get_threads())
-            .max_open(self.args.get_max_open());
+            .threads(self.args.get_threads());
 
         // Depth limits
         if let Some(max_depth) = self.args.max_depth {
