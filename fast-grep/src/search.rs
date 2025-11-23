@@ -50,13 +50,13 @@ impl SearchEngine {
             args.files_without_matches,
         );
 
-        // Initialize worker pool
+        // Initialize worker pool with context settings
         let worker_pool = WorkerPool::new(
             file_processor.clone(),
             pattern_matcher.clone(),
             args.get_threads(),
             args.invert_match,
-        );
+        ).with_context(args.get_before_context(), args.get_after_context());
 
         Ok(Self {
             args,

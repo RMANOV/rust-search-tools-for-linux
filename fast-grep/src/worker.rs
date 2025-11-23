@@ -15,6 +15,8 @@ pub struct WorkerPool {
     pattern_matcher: Arc<PatternMatcher>,
     num_threads: usize,
     invert_match: bool,
+    before_context: usize,
+    after_context: usize,
 }
 
 impl WorkerPool {
@@ -29,7 +31,15 @@ impl WorkerPool {
             pattern_matcher: Arc::new(pattern_matcher),
             num_threads,
             invert_match,
+            before_context: 0,
+            after_context: 0,
         }
+    }
+
+    pub fn with_context(mut self, before: usize, after: usize) -> Self {
+        self.before_context = before;
+        self.after_context = after;
+        self
     }
 
     pub fn search_files(&self, file_paths: Vec<PathBuf>) -> Result<Vec<MatchResult>> {
@@ -86,19 +96,43 @@ impl WorkerPool {
             // Find which line contains this match
             if let Some(line) = lines.iter().find(|line| line.contains_position(pattern_match.start)) {
                 let line_content = line.as_str()?.to_string();
-                
+
                 // Calculate match position relative to line start
                 let match_start_in_line = pattern_match.start.saturating_sub(line.start);
                 let match_end_in_line = pattern_match.end.saturating_sub(line.start);
-                
-                let match_result = MatchResult::new(
+
+                let mut match_result = MatchResult::new(
                     file_path.clone(),
                     line.number,
                     line_content,
                     match_start_in_line,
                     match_end_in_line,
                 );
-                
+
+                // Add context lines if requested
+                let before_context = self.before_context;
+                let after_context = self.after_context;
+
+                if before_context > 0 || after_context > 0 {
+                    // Extract before context
+                    for i in line.number.saturating_sub(before_context)..line.number {
+                        if let Some(context_line) = lines.iter().find(|l| l.number == i) {
+                            if let Ok(content) = context_line.as_str() {
+                                match_result.add_context_before(i, content.to_string());
+                            }
+                        }
+                    }
+
+                    // Extract after context
+                    for i in (line.number + 1)..=line.number + after_context {
+                        if let Some(context_line) = lines.iter().find(|l| l.number == i) {
+                            if let Ok(content) = context_line.as_str() {
+                                match_result.add_context_after(i, content.to_string());
+                            }
+                        }
+                    }
+                }
+
                 results.push(match_result);
             }
         }

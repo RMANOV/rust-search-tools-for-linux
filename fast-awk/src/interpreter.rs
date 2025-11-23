@@ -7,6 +7,7 @@ use std::collections::HashMap;
 pub struct Interpreter {
     pub context: RuntimeContext,
     functions: HashMap<String, Function>,
+    range_states: HashMap<usize, bool>, // Track range pattern states by rule index
 }
 
 impl Interpreter {
@@ -14,6 +15,7 @@ impl Interpreter {
         Self {
             context: RuntimeContext::new(),
             functions: HashMap::new(),
+            range_states: HashMap::new(),
         }
     }
 
@@ -45,9 +47,9 @@ impl Interpreter {
         self.context.set_current_record(record);
         let mut any_matched = false;
 
-        for rule in program.get_main_rules() {
+        for (rule_index, rule) in program.get_main_rules().iter().enumerate() {
             let matches = if let Some(ref pattern) = rule.pattern {
-                self.evaluate_pattern(pattern)?
+                self.evaluate_pattern_with_state(pattern, rule_index)?
             } else {
                 true // No pattern means always match
             };
@@ -55,7 +57,7 @@ impl Interpreter {
             if matches {
                 any_matched = true;
                 self.execute_action(&rule.action)?;
-                
+
                 match &self.context.control_flow {
                     ControlFlow::Next => {
                         self.context.clear_control_flow();
@@ -93,6 +95,40 @@ impl Interpreter {
                 let start_matches = self.evaluate_pattern(start)?;
                 let end_matches = self.evaluate_pattern(end)?;
                 Ok(start_matches || end_matches)
+            }
+        }
+    }
+
+    fn evaluate_pattern_with_state(&mut self, pattern: &Pattern, rule_index: usize) -> Result<bool> {
+        match pattern {
+            Pattern::Begin | Pattern::End => Ok(false), // Should not be called for these
+            Pattern::Expression(expr) => {
+                let value = self.evaluate_expression(expr)?;
+                Ok(value.to_bool())
+            }
+            Pattern::Range(start, end) => {
+                // Get or initialize the range state for this rule
+                let in_range = self.range_states.get(&rule_index).copied().unwrap_or(false);
+
+                // If not in range, check if we should enter
+                if !in_range {
+                    let start_matches = self.evaluate_pattern(start)?;
+                    if start_matches {
+                        self.range_states.insert(rule_index, true);
+                        return Ok(true); // Include the start line
+                    }
+                    return Ok(false);
+                }
+
+                // We are in range, check if we should exit
+                let end_matches = self.evaluate_pattern(end)?;
+                if end_matches {
+                    self.range_states.insert(rule_index, false);
+                    return Ok(true); // Include the end line
+                }
+
+                // Still in range
+                Ok(true)
             }
         }
     }
