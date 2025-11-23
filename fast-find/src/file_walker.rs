@@ -205,17 +205,23 @@ pub fn should_follow_symlink(path: &Path, follow_symlinks: bool) -> bool {
     if !follow_symlinks {
         return false;
     }
-    
+
+    // Reject paths that contain parent directory references (potential escape)
+    let path_str = path.to_string_lossy();
+    if path_str.contains("..") {
+        return false;
+    }
+
     // Additional safety checks to prevent infinite loops
     if let Ok(metadata) = std::fs::symlink_metadata(path) {
         if metadata.file_type().is_symlink() {
             // Check if this symlink would create a cycle
             if let Ok(target) = std::fs::read_link(path) {
                 // Simple heuristic: don't follow symlinks that point to parent directories
-                if target.starts_with("..") {
+                if target.to_string_lossy().contains("..") {
                     return false;
                 }
-                
+
                 // Don't follow symlinks that point to absolute paths above the current directory
                 if target.is_absolute() {
                     if let Ok(current_dir) = std::env::current_dir() {
@@ -227,7 +233,7 @@ pub fn should_follow_symlink(path: &Path, follow_symlinks: bool) -> bool {
             }
         }
     }
-    
+
     true
 }
 

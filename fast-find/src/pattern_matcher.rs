@@ -441,15 +441,20 @@ mod tests {
 
     #[test]
     fn test_glob_pattern() {
+        // Case sensitive: *.rs matches files ending in .rs (lowercase extension)
         let pattern = GlobPattern::new("*.rs", true, false).unwrap();
         assert!(pattern.matches("main.rs"));
         assert!(pattern.matches("lib.rs"));
+        assert!(pattern.matches("Main.rs"));  // Name can be any case, extension must be .rs
         assert!(!pattern.matches("main.py"));
-        assert!(!pattern.matches("Main.rs")); // case sensitive
+        assert!(!pattern.matches("main.RS")); // Extension .RS != .rs (case sensitive)
+        assert!(!pattern.matches("MAIN.RS")); // Extension .RS != .rs (case sensitive)
 
+        // Case insensitive: *.RS matches any case of extension
         let pattern = GlobPattern::new("*.RS", false, false).unwrap();
         assert!(pattern.matches("main.rs"));
         assert!(pattern.matches("Main.RS"));
+        assert!(pattern.matches("MAIN.rs"));
     }
 
     #[test]

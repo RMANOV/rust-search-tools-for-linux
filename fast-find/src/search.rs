@@ -202,9 +202,11 @@ pub fn estimate_search_complexity(args: &Args) -> SearchComplexity {
         complexity = complexity.max(SearchComplexity::Medium);
     }
     
-    // Deep searches are more complex
-    if args.max_depth.is_none() || args.max_depth.unwrap_or(0) > 10 {
-        complexity = complexity.max(SearchComplexity::Medium);
+    // Deep searches are more complex (only if explicitly set to very deep)
+    if let Some(depth) = args.max_depth {
+        if depth > 10 {
+            complexity = complexity.max(SearchComplexity::Medium);
+        }
     }
     
     // Following symlinks increases complexity
